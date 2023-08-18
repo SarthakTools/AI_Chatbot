@@ -1,7 +1,7 @@
 import numpy as np
 import Levenshtein # Import Levenshtein distance algorithm
-import time
-import pyjokes
+import time, pyjokes, re
+from textblob import TextBlob
 
 human_actions = "cook" or "dance" or "play" or "sing" or "eat" or "fight" or "eat" or "smell"
 bad_messages = "foolish" or "idiot" or "bad" or "dump" or "bad" or "damn you" or "shit" 
@@ -267,11 +267,145 @@ responses = {
     "really" : "Yes !!!",
     "tell me a poem" : "I don't know any poem",
     "poem please" : "I don't know any poem",
-    f"{invalid}" : "Sorry ! I will try to improve myself"
+    "What is the meaning of life?": "This is a philosophical question with various interpretations...",
+    "What is the Big Bang?": "The Big Bang theory is the prevailing cosmological explanation for the origin of the universe...",
+    "What is climate change?": "Climate change refers to long-term shifts in global or regional climate patterns...",
+    "What is DNA?": "DNA (deoxyribonucleic acid) is a molecule that carries genetic instructions for the development...",
+    "What is artificial intelligence (AI)?": "AI is the simulation of human intelligence processes by machines...",
+    "What is a pandemic?": "A pandemic is an outbreak of a disease that occurs over a wide geographic area...",
+    "What is the internet?": "The internet is a global network of interconnected computers and servers that enables...",
+    "What is a smartphone?": "A smartphone is a mobile device that combines the functions of a cell phone with those...",
+    "What is encryption?": "Encryption is the process of converting data into a code to prevent unauthorized access...",
+    "What is evolution?": "Evolution is the process by which living organisms change over generations through genetic variation...",
+    "What is a black hole?": "A black hole is a region in space where the gravitational pull is so strong that nothing...",
+    "What is photosynthesis?": "Photosynthesis is the process by which plants and some other organisms convert light energy...",
+    "What is a vaccine?": "A vaccine is a biological preparation that provides immunity to a specific disease by stimulating...",
+    "What is mental health?": "Mental health refers to emotional, psychological, and social well-being, encompassing one's thoughts...",
+    "What is a healthy diet?": "A healthy diet consists of a balanced intake of nutrients, including fruits, vegetables, whole grains...",
+    "What is deforestation?": "Deforestation is the removal or clearing of forests for various purposes, such as agriculture...",
+    "What is renewable energy?": "Renewable energy is energy derived from sources that are naturally replenished, such as solar...",
+    "What is recycling?": "Recycling is the process of converting waste materials into reusable materials to reduce...",
+    f"{invalid}" : "Sorry ! I will try to improve myself",
+    "What is the purpose of life?": "The purpose of life is a profound philosophical question that varies among individuals and cultures...",
+    "How do living organisms reproduce?": "Living organisms reproduce through various methods, including sexual reproduction...",
+    "What is the origin of life on Earth?": "The origin of life on Earth is still a subject of scientific research and debate...",
+    "What are the stages of human development?": "Human development encompasses stages from conception to old age, including infancy, childhood...",
+    "What is the meaning of death?": "Death is the cessation of biological functions and is often considered the end of an individual's life...",
+    "How do genetics influence our lives?": "Genetics play a significant role in determining traits, susceptibility to diseases, and various aspects...",
+    "What is the role of emotions in human life?": "Emotions are complex psychological and physiological responses that play a crucial role in human...",
+    "How do cultural beliefs shape our perception of life?": "Cultural beliefs and values influence how individuals perceive and approach life's meaning...",
+    "How has technology impacted human life?": "Technology has revolutionized various aspects of human life, from communication and healthcare...",
+    "What is the impact of the environment on life forms?": "The environment has a profound impact on life forms, affecting their survival, behavior, and evolution...",
+    "What is consciousness?": "Consciousness is the state of being aware of and able to think, perceive, and experience one's surroundings...",
+    "How does nutrition impact overall health?": "Nutrition plays a vital role in maintaining physical health, providing essential nutrients that support...",
+    "What is the role of relationships in a person's life?": "Relationships are important for emotional well-being and social interaction, providing support, companionship...",
+    "How does culture shape the concept of happiness?": "Cultural factors influence how individuals define and pursue happiness, including social norms...",
+    "What is the significance of education in life?": "Education equips individuals with knowledge, skills, and critical thinking abilities that empower...",
+    "What is the impact of art and creativity on well-being?": "Engaging in artistic and creative activities can enhance mental well-being, self-expression, and emotional...",
+    "How do different belief systems address the meaning of life?": "Various religious, philosophical, and spiritual belief systems offer diverse perspectives on the...",
+    "What is the role of ethics and morality in human life?": "Ethics and morality guide individuals in making ethical decisions, shaping their behaviors, and contributing...",
+    "How does personal growth contribute to a fulfilling life?": "Personal growth involves continuous self-improvement, learning, and self-awareness, leading to a more...",
+    "What are the psychological factors that influence life satisfaction?": "Psychological factors such as mindset, gratitude, resilience, and positive social connections...",
+    "What are moral lessons?": "Moral lessons are ethical principles or values that guide individuals in making virtuous choices...",
+    "Why are moral lessons important?": "Moral lessons help individuals develop empathy, integrity, and a sense of responsibility...",
+    "How do stories and literature convey moral lessons?": "Stories and literature often use characters and plotlines to illustrate moral dilemmas and teach lessons...",
+    "What is the role of cultural and societal norms in moral lessons?": "Cultural and societal norms influence the perception of right and wrong, contributing to the formation...",
+    "How do parents and caregivers teach moral lessons to children?": "Parents and caregivers impart moral lessons through role modeling, open discussions, setting boundaries...",
+    "What impact can moral lessons have on decision-making?": "Moral lessons shape ethical decision-making by guiding individuals to consider the consequences...",
+    "Can moral lessons change over time or across cultures?": "Moral lessons can evolve over time and vary across cultures due to changing social dynamics and shifts...",
+    "How do moral lessons relate to personal growth and character development?": "Moral lessons contribute to personal growth and character development by fostering qualities...",
+    "What is the connection between moral lessons and ethical dilemmas?": "Moral lessons provide a foundation for addressing ethical dilemmas, helping individuals navigate complex...",
+    "How do different philosophies and religions offer moral guidance?": "Different philosophies and religions provide moral guidance through their teachings, scriptures, and...",
+    "How do chatbots work?": "Chatbots use natural language processing (NLP) and machine learning algorithms to understand and generate...",
+    "What are the benefits of using chatbots?": "Chatbots offer 24/7 availability, quick responses, personalized interactions, and can handle repetitive...",
+    "Can chatbots understand human emotions?": "Advanced chatbots can recognize certain emotions through text analysis, but their understanding of emotions...",
+    "Are chatbots replacing human customer support agents?": "Chatbots can handle routine queries and tasks, but human customer support agents are still needed...",
+    "What are the limitations of current chatbot technology?": "Current chatbots may struggle with understanding complex or nuanced inquiries, and they lack...",
+    "How do chatbots learn and improve over time?": "Chatbots learn and improve through machine learning, analyzing user interactions and adapting...",
+    "What industries are using chatbots?": "Chatbots are employed in industries like customer service, e-commerce, healthcare, finance, and more...",
+    "What is the future of chatbot technology?": "The future of chatbots may involve more advanced AI, improved natural language understanding, and...",
+    "Can chatbots pass the Turing test?": "While some chatbots have come close to passing the Turing test, which evaluates a machine's ability...",
+    "What is the dark web?": "The dark web is a part of the internet that is intentionally hidden and requires specific software to access...",
+    "How is the dark web different from the deep web?": "The deep web refers to all parts of the internet not indexed by search engines, while the dark web specifically...",
+    "Is the dark web illegal?": "While not everything on the dark web is illegal, it is known for hosting illegal activities such as drug trafficking...",
+    "What are Tor and the Onion Router?": "Tor (The Onion Router) is a network that enables anonymous communication and access to the dark web...",
+    "What types of activities occur on the dark web?": "The dark web hosts a range of activities, including illegal markets, cybercrime, hacking services, counterfeit...",
+    "Is it safe to access the dark web?": "Accessing the dark web comes with risks, including exposure to illegal content, scams, malware, and potential...",
+    "How can law enforcement monitor the dark web?": "Law enforcement agencies use specialized tools and techniques to track illegal activities on the dark web...",
+    "Can you buy legitimate products or services on the dark web?": "While some legal and legitimate services may exist, the dark web is associated with high levels of anonymity...",
+    "What steps can individuals take to stay safe online and avoid the dark web?": "To stay safe online, individuals should practice good cybersecurity habits, avoid clicking on suspicious...",
+    "What are the ethical and legal implications of the dark web?": "The dark web raises complex ethical and legal questions related to privacy, free speech, illicit activities...",
+    "What is Natural Language Processing (NLP)?": "Natural Language Processing (NLP) is a field of artificial intelligence that focuses on enabling...",
+    "What are Transformers in NLP?": "Transformers are a type of neural network architecture designed for sequence-to-sequence tasks in NLP...",
+    "What is GPT in NLP?": "GPT (Generative Pre-trained Transformer) is a type of transformer model that has been pre-trained on a large...",
+    "How does GPT work?": "GPT uses a self-attention mechanism to process input data in parallel and capture contextual information...",
+    "What are the applications of GPT and transformers in NLP?": "GPT and transformers are used for various NLP tasks, including text generation, machine translation...",
+    "How is GPT pre-trained and fine-tuned?": "GPT is pre-trained on a large corpus of text data and fine-tuned on specific tasks using supervised learning...",
+    "What are the limitations of GPT and transformers in NLP?": "GPT and transformers may struggle with understanding nuanced context, generating coherent long text...",
+    "Are GPT and transformers used in industry and research?": "Yes, GPT and transformers are widely used in both industry and research for tasks such as chatbots, language...",
+    "What is transfer learning in NLP and how does it relate to GPT?": "Transfer learning involves training a model on one task and then adapting it to perform another task...",
+    "What is the future of NLP and transformer-based models?": "The future of NLP includes advancements in transformer architectures, model size, training techniques...",
+    "What are attention mechanisms in NLP?": "Attention mechanisms in NLP allow models like transformers to weigh different parts of the input...",
+    "What is BERT in NLP?": "BERT (Bidirectional Encoder Representations from Transformers) is a transformer-based model pre-trained...",
+    "How are transformers used in machine translation?": "Transformers are used in machine translation tasks by encoding the source language and decoding...",
+    "What is the significance of fine-tuning in NLP models?": "Fine-tuning customizes a pre-trained model for specific tasks, enabling it to learn task-specific patterns...",
+    "How do transformers handle long-range dependencies in text?": "Transformers handle long-range dependencies through self-attention, allowing them to capture...",
+    "What is the role of embeddings in NLP and transformers?": "Embeddings convert text into numerical vectors, allowing models to process and understand textual...",
+    "What are the challenges in building multilingual NLP models?": "Building multilingual NLP models requires addressing linguistic differences, varying data availability...",
+    "How do transformers improve upon earlier NLP models?": "Transformers improve NLP by capturing global context, handling long-range dependencies, and...",
+    "What are some popular transformer architectures other than GPT and BERT?": "Other popular transformer architectures include T5 (Text-To-Text Transfer Transformer), XLNet...",
+    "Can transformers be used for tasks beyond text-based NLP?": "Yes, transformers have been adapted for tasks like image generation, protein folding prediction...",
+    "Who is a singer?": "A singer is a person who uses their voice to create musical sounds, often performing songs as a solo artist or as part...",
+    "How do singers develop their vocal skills?": "Singers develop their vocal skills through practice, vocal exercises, proper breathing techniques, and often...",
+    "What are some famous singers in the music industry?": "Famous singers include artists like Beyoncé, Michael Jackson, Adele, Madonna, Elvis Presley, Taylor Swift...",
+    "What role does vocal range play in a singer's performance?": "Vocal range refers to the span between the highest and lowest notes a singer can comfortably sing...",
+    "How do singers choose songs that suit their voice?": "Singers choose songs based on factors like their vocal range, tone, style, and emotional connection to the lyrics...",
+    "Who is a writer?": "A writer is an individual who uses written language to communicate ideas, stories, information, and emotions...",
+    "How do writers overcome writer's block?": "Writers use various strategies to overcome writer's block, such as changing their writing environment, taking breaks...",
+    "What are some famous writers and their notable works?": "Famous writers include authors like William Shakespeare (Hamlet, Romeo and Juliet), Jane Austen (Pride and Prejudice)...",
+    "What role does research play in the writing process?": "Research is crucial for writers to ensure accuracy and credibility in their work, whether it's fiction, nonfiction...",
+    "How do writers find inspiration for their writing?": "Writers find inspiration from personal experiences, observations, reading, nature, current events, and their imagination...",
+    "What is capital in economics?": "Capital in economics refers to financial assets, resources, or wealth used to generate income, produce goods...",
+    "What are the different types of capital in economics?": "Types of capital include physical capital (machinery, equipment), human capital (skills, knowledge), financial...",
+    "How does capital contribute to economic growth?": "Capital investment leads to increased productivity, innovation, job creation, and overall economic development...",
+    "What is venture capital and how does it support startups?": "Venture capital is funding provided to early-stage startups with high growth potential, often in exchange for...",
+    "How is capital allocation important for businesses and investments?": "Effective capital allocation involves making strategic decisions to allocate resources where they can generate...",
+    "What is an operating system (OS)?": "An operating system is software that manages computer hardware and provides services to...",
+    "What are the functions of an operating system?": "An operating system manages hardware resources, provides user interfaces, runs applications, manages...",
+    "What are some examples of popular operating systems?": "Popular operating systems include Windows, macOS, Linux distributions (Ubuntu, Fedora), iOS, and Android...",
+    "What is multitasking and how does an OS support it?": "Multitasking allows multiple programs to run simultaneously. An OS schedules tasks, allocates resources...",
+    "How does virtual memory work in an operating system?": "Virtual memory uses a portion of storage as an extension of RAM, allowing larger programs to run...",
+    "What is Python?": "Python is a high-level programming language known for its simplicity, readability, and versatility...",
+    "What can you do with Python?": "Python is used for web development, data analysis, scientific computing, machine learning, automation...",
+    "How do you install Python?": "You can download and install Python from the official Python website. There are also package managers...",
+    "What are Python libraries and frameworks?": "Python libraries are pre-written code modules that extend Python's capabilities. Frameworks provide...",
+    "What is the Python interpreter?": "The Python interpreter executes Python code line by line and converts it into machine-understandable...",
+    "How is Python used in data science and machine learning?": "Python's rich ecosystem of libraries like NumPy, pandas, scikit-learn, and TensorFlow make it popular...",
+    "Is Python suitable for beginners?": "Yes, Python's easy-to-understand syntax and extensive documentation make it an excellent choice for beginners...",
+    "What are some well-known companies using Python?": "Companies like Google, Instagram, Dropbox, Spotify, and NASA use Python for various purposes...",
+    "How can I learn Python programming?": "You can learn Python through online tutorials, courses, coding platforms, books, and practice projects..."
 }
+
+# Define a function to remove emoji from the text
+def remove_emoji_tag(text):
+    """So, r'[^\w\s,.]' means:
+
+    1. (^\w) matches any character that is not a word character (letters, digits, or underscores).
+    2. (\s) matches any whitespace character (spaces, tabs, line breaks).
+    3. (,) matches a comma.
+    4. (.) matches a period.
+    """
+    return re.sub(r'[^\w\s,.]', '' , text)
+
+# Define a function to auto correct the word
+def auto_correct_sentence(text):
+    corrected_text = TextBlob(text).correct()
+    return str(corrected_text)
 
 # Define a function to generate responses with typing errors
 def generate_response(user_input):
+    user_input = remove_emoji_tag(user_input)
+    user_input = auto_correct_sentence(user_input)
     user_input = user_input.lower() # Convert input to lowercase
     response = "I'm sorry, I don't understand. Can you please rephrase your question?" # Default response if no matching keyword found
     current_time = time.strftime('%H:%M:%S')
@@ -288,6 +422,7 @@ def generate_response(user_input):
         if distance < min_distance:
             min_distance = distance
             response = responses[keyword]
+            
     return response
 
 if __name__ == "__main__":
